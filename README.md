@@ -54,7 +54,7 @@ CodeLeap Network is a Twitter/Instagram-style social feed where users can create
 
 ## 🌐 Deploy
 
-> Coming soon: production deployment link
+> Coming soon: [production deployment link](https://code-leap-phi.vercel.app/)
 
 ---
 
