@@ -15,13 +15,11 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Heart, MessageCircle, Send, Trash2, Repeat2, Eye } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLikes } from '@/hooks/useLikes';
-import { useReposts } from '@/hooks/useReposts';
-import { useViews } from '@/hooks/useViews';
-import { useComments } from '@/hooks/useComments';
+import { usePostInteractions } from '@/hooks/usePostInteractions';
 import { formatTimeAgo } from '@/lib/utils';
 import { EditPostModal } from '@/components/modals/EditPostModal';
 import { DeletePostModal } from '@/components/modals/DeletePostModal';
+import { MentionInput } from '@/components/feed/MentionInput';
 import type { Post } from '@/types/api';
 
 /**
@@ -65,18 +63,26 @@ interface PostCardProps {
 
 export function PostCard({ post, index = 0 }: PostCardProps) {
   const { username } = useAuth();
-  const { addLike, isLiked, getLikeCount } = useLikes();
-  const { toggleRepost, isReposted, getRepostCount } = useReposts();
-  const { recordView, getViewCount } = useViews();
-  const { comments, addComment, deleteComment } = useComments(post.id);
+  const {
+    likeCount,
+    commentCount,
+    repostCount,
+    viewCount,
+    liked,
+    reposted,
+    comments,
+    addLike,
+    toggleRepost,
+    recordView,
+    addComment,
+    deleteComment,
+  } = usePostInteractions(post);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
 
   const isOwner = username === post.username;
-  const liked = isLiked(post.id);
-  const reposted = isReposted(post.id);
   const { text: contentText, images: contentImages } = parseContent(post.content);
 
   // Auto-count view when post appears on screen (like Twitter)
@@ -89,7 +95,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          recordView(post.id);
+          recordView();
           observer.disconnect();
         }
       },
@@ -100,11 +106,14 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
     return () => observer.disconnect();
   }, [username, post.id, recordView]);
 
+  const [mentionedUsers, setMentionedUsers] = useState<string[]>([]);
+
   const handleAddComment = (e: FormEvent) => {
     e.preventDefault();
     if (!username || !commentText.trim()) return;
-    addComment(username, commentText.trim());
+    addComment(commentText.trim(), mentionedUsers);
     setCommentText('');
+    setMentionedUsers([]);
   };
 
   return (
@@ -191,7 +200,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
           {/* ── Actions row ── */}
           <div className="flex items-center gap-5 mt-5">
             <button
-              onClick={() => addLike(post.id)}
+              onClick={() => addLike()}
               className={[
                 'flex items-center gap-1.5 text-body transition-all duration-150',
                 liked ? 'text-pink-500 cursor-default' : 'text-[#999] hover:text-pink-400',
@@ -205,7 +214,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
                 className={liked ? 'fill-pink-500 text-pink-500' : ''}
                 style={liked ? { animation: 'heartPulse 0.3s ease' } : {}}
               />
-              <span>{getLikeCount(post.id) > 0 ? getLikeCount(post.id) : 'Like'}</span>
+              <span>{likeCount > 0 ? likeCount : 'Like'}</span>
             </button>
 
             <button
@@ -214,14 +223,14 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
             >
               <MessageCircle size={18} aria-hidden="true" />
               <span>
-                {comments.length > 0
-                  ? `${comments.length} comment${comments.length > 1 ? 's' : ''}`
+                {commentCount > 0
+                  ? `${commentCount} comment${commentCount > 1 ? 's' : ''}`
                   : 'Comment'}
               </span>
             </button>
 
             <button
-              onClick={() => toggleRepost(post.id)}
+              onClick={() => toggleRepost()}
               className={[
                 'flex items-center gap-1.5 text-body transition-colors duration-150',
                 reposted ? 'text-success' : 'text-[#999] hover:text-success',
@@ -230,7 +239,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               aria-pressed={reposted}
             >
               <Repeat2 size={18} aria-hidden="true" />
-              <span>{getRepostCount(post.id) > 0 ? getRepostCount(post.id) : 'Repost'}</span>
+              <span>{repostCount > 0 ? repostCount : 'Repost'}</span>
             </button>
 
             <div
@@ -238,7 +247,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
               aria-label="View count"
             >
               <Eye size={18} aria-hidden="true" />
-              <span>{getViewCount(post.id) > 0 ? getViewCount(post.id) : 'View'}</span>
+              <span>{viewCount > 0 ? viewCount : 'View'}</span>
             </div>
           </div>
 
@@ -275,11 +284,12 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
               {/* Add comment form */}
               <form onSubmit={handleAddComment} className="flex gap-2">
-                <input
+                <MentionInput
                   value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Write a comment... Use @username to mention"
-                  className="flex-1 px-3 py-2 text-body rounded-lg border border-[#777] bg-white placeholder:text-[#ccc] focus:outline-none focus:border-primary transition-colors"
+                  onChange={setCommentText}
+                  onMentionsChange={setMentionedUsers}
+                  placeholder="Write a comment... Type @ to mention"
+                  className="w-full px-3 py-2 text-body rounded-lg border border-[#777] bg-white placeholder:text-[#ccc] focus:outline-none focus:border-primary transition-colors"
                 />
                 <button
                   type="submit"

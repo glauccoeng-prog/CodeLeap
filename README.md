@@ -1,15 +1,15 @@
 # 💬 CodeLeap Network
 
 A modern, responsive social network for sharing posts.
-Built with Next.js 16, React 19, Tailwind CSS v4, and Firebase Auth,
-focused on performance, fluid typography, accessibility, and clean code.
+Built with Next.js 16, React 19, Tailwind CSS v4, Firebase Auth, and Cloud Firestore,
+focused on performance, real-time social interactions, fluid typography, accessibility, and clean code.
 
 ![Project Status](https://img.shields.io/badge/Status-Completed-green)
 ![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?logo=nextdotjs)
 ![React](https://img.shields.io/badge/React-19.2.3-61DAFB?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?logo=firebase)
+![Firebase](https://img.shields.io/badge/Firebase-Auth_+_Firestore-FFCA28?logo=firebase)
 
 ---
 
@@ -35,18 +35,20 @@ focused on performance, fluid typography, accessibility, and clean code.
 
 ## 🎯 Overview
 
-CodeLeap Network is a Twitter/Instagram-style social feed where users can create, edit, and delete posts, like, repost, comment with @mentions, attach images, and filter/sort the feed — all with infinite scroll and Firebase authentication.
+CodeLeap Network is a Twitter/Instagram-style social feed where users can create, edit, and delete posts, like, repost, comment with @mentions, attach images, and filter/sort the feed — all with infinite scroll, Firebase authentication, and **real-time social interactions powered by Cloud Firestore**.
 
 ### Key Features:
 
 - ✅ **Fully Responsive** with fluid typography (`font-size: clamp()`)
-- ✅ **Firebase Authentication** (Google + Email/Password) with simple fallback
+- ✅ **Firebase Authentication** (Google + Email/Password + Anonymous fallback)
+- ✅ **Cloud Firestore** for real-time social data shared across all users
 - ✅ **Full CRUD** for posts via REST API
 - ✅ **Infinite Scroll** with IntersectionObserver + TanStack Query
-- ✅ **Permanent Likes** (no unlike, Instagram-style)
-- ✅ **Reposts** with toggle on/off and counter
-- ✅ **Automatic Views** via IntersectionObserver (once per session)
-- ✅ **Comments** with highlighted @mentions
+- ✅ **Permanent Likes** (no unlike, Instagram-style) — synced via Firestore
+- ✅ **Reposts** with toggle on/off and counter — synced via Firestore
+- ✅ **Automatic Views** via IntersectionObserver (once per session) — synced via Firestore
+- ✅ **Comments** with `@mention` autocomplete dropdown
+- ✅ **Real-time Notifications** 🔔 (comments, likes, reposts, @mentions)
 - ✅ **Smooth Animations** with Framer Motion
 - ✅ **Clean Code** with ESLint, Prettier, and strict TypeScript
 
@@ -71,12 +73,12 @@ CodeLeap Network is a Twitter/Instagram-style social feed where users can create
 
 ### State & Data
 
-| Technology           | Version | Description                           |
-| -------------------- | ------- | ------------------------------------- |
-| TanStack React Query | 5.90+   | Cache, mutations, and infinite scroll |
-| Firebase             | 12.10+  | Authentication (Google + Email)       |
-| react-hook-form      | 7.71+   | Form management                       |
-| zod                  | 4.3+    | Schema validation                     |
+| Technology           | Version | Description                                         |
+| -------------------- | ------- | --------------------------------------------------- |
+| TanStack React Query | 5.90+   | Cache, mutations, and infinite scroll               |
+| Firebase             | 12.10+  | Auth (Google + Email + Anonymous) + Cloud Firestore |
+| react-hook-form      | 7.71+   | Form management                                     |
+| zod                  | 4.3+    | Schema validation                                   |
 
 ### UI & Animations
 
@@ -102,8 +104,9 @@ CodeLeap Network is a Twitter/Instagram-style social feed where users can create
 ### 1. 🔐 Authentication
 
 - Login/Register with **Firebase Auth** (Email + Google)
+- **Anonymous Authentication** for simple login users (provides stable Firebase UID)
 - Password strength indicators on registration
-- Fallback to simple authentication (username) when Firebase is unavailable
+- Automatic user registration in Firestore `users` collection on login
 - Session persistence via `localStorage`
 
 ### 2. 📝 Post CRUD
@@ -113,26 +116,40 @@ CodeLeap Network is a Twitter/Instagram-style social feed where users can create
 - Deletion with confirmation modal
 - Validation with `react-hook-form` + `zod`
 
-### 3. ❤️ Social Interactions
+### 3. ❤️ Social Interactions (Cloud Firestore — Real-time)
 
-- **Permanent Like** — no unlike option (Instagram-style)
-- **Repost** — toggle on/off with counter
-- **Views** — automatic counting via IntersectionObserver (once per session)
-- **Comments** — with `@mention` support highlighted in blue
+All social data is stored in **Cloud Firestore** and synced in real-time across all users via `onSnapshot` listeners.
 
-### 4. 📱 Responsive Design
+- **Permanent Like** — no unlike option (Instagram-style), shared across all users
+- **Repost** — toggle on/off with counter, shared across all users
+- **Views** — automatic counting via IntersectionObserver (deduplicated per user)
+- **Comments** — with `@mention` autocomplete dropdown (MentionInput component)
+- **@Mentions** highlighted in blue with clickable autocomplete
+
+> Previously stored in `localStorage` (per-browser only). Migrated to Firestore so all interactions are visible to every user.
+
+### 4. 🔔 Real-time Notifications
+
+- **Bell icon** 🔔 in the header with unread count badge
+- **Notification types**: like, comment, repost, @mention
+- **Post author** receives notifications when someone likes, comments, or reposts
+- **Mentioned users** receive notifications when tagged with `@username` in comments
+- Mark individual or all notifications as read
+- Real-time updates via Firestore `onSnapshot`
+
+### 5. 📱 Responsive Design
 
 - **Fluid typography** with `clamp()` (320px → 1200px)
 - Adaptive layout across all screen sizes
 - Responsive cards, modals, and forms
 
-### 5. 🔄 Infinite Scroll
+### 6. 🔄 Infinite Scroll
 
 - Pagination via `useInfiniteQuery` (TanStack Query)
 - Sentinel element with IntersectionObserver
 - Filter by username and sort order (newest/oldest)
 
-### 6. 🎬 Animations
+### 7. 🎬 Animations
 
 - Card entrance with fade + slide (Framer Motion)
 - Heart pulse on like
@@ -195,10 +212,11 @@ The project follows the **Next.js App Router** architecture with client-side com
                                           │                       │
                                           ▼                       ▼
                                   ┌──────────────┐    ┌──────────────────┐
-                                  │  REST API    │    │  localStorage    │
-                                  │  (CodeLeap)  │    │  (likes/reposts/ │
-                                  │              │    │   views/comments)│
-                                  └──────────────┘    └──────────────────┘
+                                  │  REST API    │    │ Cloud Firestore  │
+                                  │  (CodeLeap)  │    │ (likes/reposts/  │
+                                  │  posts CRUD  │    │  views/comments/ │
+                                  └──────────────┘    │  notifications)  │
+                                                      └──────────────────┘
 ```
 
 ---
@@ -293,25 +311,23 @@ The project follows the **Next.js App Router** architecture with client-side com
 ### Social Interactions Flow
 
 ```
-  ❤️ LIKE                🔁 REPOST              👁️ VIEW
-  ─────────              ──────────             ──────────
-  Click                  Click                  Viewport
-    │                      │                   intersection
-    ▼                      ▼                      │
-  already     ──YES──▶ nothing  reposted? ──YES──▶ remove   already seen
-  liked?                        │                  this session?
-    │                          NO                    │
-    NO                          │                   NO
-    │                           ▼                    │
-    ▼                    toggleRepost()              ▼
-  addLike()                  │              recordView()
-    │                        ▼                     │
-    ▼                    localStorage              ▼
-  localStorage           reposts + count       localStorage
-  likes + count                                view counts
-                                                   +
-                                              sessionStorage
-                                              (session dedup)
+  ❤️ LIKE                🔁 REPOST              👁️ VIEW              🔔 NOTIFY
+  ─────────              ──────────             ──────────           ──────────
+  Click                  Click                  Viewport             On action
+    │                      │                   intersection             │
+    ▼                      ▼                      │                     ▼
+  already     ──YES──▶ nothing  reposted? ──YES──▶ remove   already seen   createNotification()
+  liked?                        │                  this session?       │
+    │                          NO                    │            ┌────┴────┐
+    NO                          │                   NO            │         │
+    │                           ▼                    │         post owner  @mentioned
+    ▼                    toggleRepost()              ▼          user       users
+  addLike()                  │              recordView()          │         │
+    │                        ▼                     │              ▼         ▼
+    ▼                    Firestore                 ▼          Firestore  Firestore
+  Firestore              reposts + count       Firestore     notifications/
+  likes + count          (real-time)           view counts   {userId}/items/
+  (real-time)                                  (real-time)
 ```
 
 ---
@@ -372,14 +388,14 @@ codeleap/
     │   ├── 📄 useDeletePost.ts              # Delete mutation
     │   ├── 📄 useUpdatePost.ts              # Update mutation
     │   ├── 📄 usePosts.ts                   # Infinite post query
-    │   ├── 📄 useLikes.ts                   # Likes system
-    │   ├── 📄 useReposts.ts                 # Reposts system
-    │   ├── 📄 useViews.ts                   # Auto view tracking
+    │   ├── 📄 usePostInteractions.ts        # Consolidated: likes, reposts, views, comments + notifications
+    │   ├── 📄 useNotifications.ts           # Real-time notification subscription
     │   └── 📄 useIntersectionObserver.ts    # Generic observer
     │
     ├── 📁 lib/                              # Utilities
     │   ├── 📄 api.ts                        # HTTP client (REST API)
-    │   ├── 📄 firebase.ts                   # Conditional Firebase init
+    │   ├── 📄 firebase.ts                   # Firebase init (Auth + Firestore)
+    │   ├── 📄 firestore.ts                  # Firestore service layer (all read/write ops)
     │   ├── 📄 providers.tsx                 # Providers wrapper
     │   └── 📄 utils.ts                      # cn() + formatTimeAgo()
     │
@@ -438,12 +454,13 @@ codeleap/
 
 ### Feed Components
 
-| Component        | Description                                      |
-| ---------------- | ------------------------------------------------ |
-| `AppHeader`      | Sticky header with logout modal                  |
-| `CreatePostForm` | Validated form with image attachment             |
-| `PostList`       | Feed with sort, filter, and infinite scroll      |
-| `PostCard`       | Full card: like, repost, view, comment, @mention |
+| Component        | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| `AppHeader`      | Sticky header + notification bell 🔔 + logout modal |
+| `CreatePostForm` | Validated form with image attachment                |
+| `PostList`       | Feed with sort, filter, and infinite scroll         |
+| `PostCard`       | Full card: like, repost, view, comment, @mention    |
+| `MentionInput`   | Text input with @username autocomplete dropdown     |
 
 ### State Components
 
@@ -457,16 +474,17 @@ codeleap/
 
 ## 🪝 Custom Hooks
 
-| Hook                        | Responsibility                                        |
-| --------------------------- | ----------------------------------------------------- |
-| `usePosts()`                | `useInfiniteQuery` — feed pagination (PAGE_SIZE = 10) |
-| `useCreatePost()`           | POST mutation + cache invalidation                    |
-| `useUpdatePost()`           | PATCH mutation + invalidation                         |
-| `useDeletePost()`           | DELETE mutation + invalidation                        |
-| `useLikes()`                | Permanent like — `addLike()`, no unlike, localStorage |
-| `useReposts()`              | Toggle repost — `toggleRepost()`, localStorage        |
-| `useViews()`                | Auto-tracking — IntersectionObserver + sessionStorage |
-| `useIntersectionObserver()` | Generic observer for scroll sentinel                  |
+| Hook                        | Responsibility                                                        |
+| --------------------------- | --------------------------------------------------------------------- |
+| `usePosts()`                | `useInfiniteQuery` — feed pagination (PAGE_SIZE = 10)                 |
+| `useCreatePost()`           | POST mutation + cache invalidation                                    |
+| `useUpdatePost()`           | PATCH mutation + invalidation                                         |
+| `useDeletePost()`           | DELETE mutation + invalidation                                        |
+| `usePostInteractions()`     | Consolidated: likes, reposts, views, comments + notification dispatch |
+| `useNotifications()`        | Real-time notification subscription via Firestore `onSnapshot`        |
+| `useIntersectionObserver()` | Generic observer for scroll sentinel                                  |
+
+> **Note:** The previous `useLikes`, `useReposts`, `useViews`, and `useComments` hooks (localStorage-based) were consolidated into a single `usePostInteractions` hook backed by Cloud Firestore.
 
 ---
 
@@ -505,10 +523,16 @@ cd CodeLeap/codeleap
 # 2. Install dependencies
 pnpm install
 
-# 3. Start the development server
+# 3. Configure Firebase (create .env.local)
+cp .env.example .env.local
+# Fill in your Firebase project credentials
+```
+
+```bash
+# 4. Start the development server
 pnpm dev
 
-# 4. Open in your browser
+# 5. Open in your browser
 # http://localhost:3000
 ```
 
@@ -550,7 +574,32 @@ This project was built based on the Figma designs for CodeLeap Network:
 
 ---
 
-## 👨‍💻 Author
+## �️ Firestore Data Model
+
+```
+posts_meta/{postId}                      → { likeCount, commentCount, repostCount, viewCount }
+  └── likes/{userId}                     → { likedAt }
+  └── reposts/{userId}                   → { repostedAt }
+  └── views/{userId}                     → { viewedAt }
+  └── comments/{commentId}               → { userId, username, text, createdAt }
+
+notifications/{userId}/items/{notifId}   → { type, fromUsername, fromUserId, postId, postTitle, read, createdAt }
+
+users/{uid}                              → { username, updatedAt }
+```
+
+### Notification Types
+
+| Type      | Trigger                            | Recipient      |
+| --------- | ---------------------------------- | -------------- |
+| `like`    | User likes a post                  | Post author    |
+| `comment` | User comments on a post            | Post author    |
+| `repost`  | User reposts a post                | Post author    |
+| `mention` | User mentions @username in comment | Mentioned user |
+
+---
+
+## �👨‍💻 Author
 
 **Glaucco Siqueira**
 

@@ -3,11 +3,12 @@
  *
  * Provides authentication state and methods to the entire app.
  * Supports two modes:
- *  1. Firebase Auth (when configured): Google OAuth + Email/Password sign-in/register
+ *  1. Firebase Auth (when configured): Google OAuth + Email/Password + Anonymous Auth
  *  2. Simple mode (fallback): Username stored in localStorage, no real auth
  *
- * The context exposes: user, username, isAuthenticated, isLoading,
- * loginWithGoogle, loginWithEmail, registerWithEmail, loginSimple, logout.
+ * When Firebase is configured and the user does a "simple login" (username only),
+ * an anonymous Firebase account is created in the background so the user gets a
+ * stable uid for Firestore interactions (likes, comments, reposts, views).
  */
 'use client';
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
@@ -16,12 +17,14 @@ import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInAnonymously,
   updateProfile,
   signOut,
   GoogleAuthProvider,
   type User,
 } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '@/lib/firebase';
+import { registerUser } from '@/lib/firestore';
 
 /** Shape of the auth context value provided to consumers */
 interface AuthContextValue {
@@ -32,8 +35,8 @@ interface AuthContextValue {
   loginWithGoogle: () => Promise<void>;
   loginWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
   registerWithEmail: (email: string, password: string, displayName: string) => Promise<void>;
-  /** Legacy simple login — sets username in localStorage (fallback when Firebase is not configured) */
-  loginSimple: (username: string) => void;
+  /** Simple login — sets username and creates anonymous Firebase session for Firestore access */
+  loginSimple: (username: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -66,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const name = firebaseUser.displayName || firebaseUser.email || 'User';
         setSimpleUsername(name);
         localStorage.setItem(STORAGE_KEY, name);
+        // Register user in Firestore so other users can find their uid by username
+        registerUser(firebaseUser.uid, name).catch(() => {});
       } else {
         setSimpleUsername(null);
         localStorage.removeItem(STORAGE_KEY);
@@ -95,11 +100,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const loginSimple = useCallback((name: string) => {
-    const trimmed = name.trim();
-    setSimpleUsername(trimmed);
-    localStorage.setItem(STORAGE_KEY, trimmed);
-  }, []);
+  const loginSimple = useCallback(
+    async (name: string) => {
+      const trimmed = name.trim();
+      setSimpleUsername(trimmed);
+      localStorage.setItem(STORAGE_KEY, trimmed);
+
+      // When Firebase is available, create an anonymous account so the user
+      // gets a stable uid for Firestore interactions (likes, comments, etc.)
+      if (firebaseReady && auth && !auth.currentUser) {
+        try {
+          const cred = await signInAnonymously(auth);
+          await updateProfile(cred.user, { displayName: trimmed });
+        } catch {
+          // Anonymous sign-in failed — user can still browse, just no persisted interactions
+        }
+      }
+    },
+    [firebaseReady]
+  );
 
   const logout = useCallback(async () => {
     if (firebaseReady && auth) {

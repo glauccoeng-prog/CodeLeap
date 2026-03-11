@@ -1,9 +1,8 @@
 /**
  * Firebase Configuration
  *
- * Conditionally initializes Firebase only when valid config is provided
- * via environment variables. This allows the app to work without Firebase
- * by falling back to simple username-based auth.
+ * Initializes Firebase App, Auth, and Firestore when valid config is provided
+ * via environment variables.
  *
  * Required env vars (all prefixed NEXT_PUBLIC_FIREBASE_):
  *  - API_KEY, AUTH_DOMAIN, PROJECT_ID, STORAGE_BUCKET,
@@ -11,6 +10,7 @@
  */
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 
 // Firebase config sourced from environment variables
 const firebaseConfig = {
@@ -29,14 +29,15 @@ export function isFirebaseConfigured(): boolean {
 }
 
 // Only initialize Firebase when env vars are properly configured
-// This prevents crashes when running without Firebase credentials
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
+let db: Firestore | null = null;
 
 if (isFirebaseConfigured()) {
   app = getApps().length ? getApp() : initializeApp(firebaseConfig);
   auth = getAuth(app);
+  db = getFirestore(app);
 }
 
-export { auth };
+export { auth, db };
 export default app;
