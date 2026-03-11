@@ -1,26 +1,83 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
+/* ── Tailwind v4 theme extension ── */
+@theme {
+  --color-primary: #7695ec;
+  --color-primary-dark: #5a7be8;
+  --color-primary-light: #eef2fd;
+  --color-danger: #ef4444;
+  --color-danger-dark: #dc2626;
+  --color-success: #47b960;
+  --color-success-dark: #3da352;
+  --color-page-bg: #dddddd;
+  --font-roboto: 'Roboto', sans-serif;
+
+  /* Fluid typography — scales between 320px and 1200px viewports */
+  --font-size-heading: clamp(1.125rem, 1rem + 0.5vw, 1.375rem); /* 18px → 22px */
+  --font-size-heading-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem); /* 20px → 24px */
+  --font-size-subheading: clamp(0.938rem, 0.85rem + 0.4vw, 1.125rem); /* 15px → 18px */
+  --font-size-label: clamp(0.875rem, 0.82rem + 0.25vw, 1rem); /* 14px → 16px */
+  --font-size-body: clamp(0.8rem, 0.76rem + 0.2vw, 0.875rem); /* 12.8px → 14px */
+  --font-size-caption: clamp(0.688rem, 0.66rem + 0.15vw, 0.75rem); /* 11px → 12px */
+}
+
+/* ── CSS custom properties ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-roboto: 'Roboto', sans-serif;
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Base reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-roboto, 'Roboto', sans-serif);
+  background-color: #dddddd;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Custom scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* ── Focus visible ring ── */
+*:focus-visible {
+  outline: 2px solid #7695ec;
+  outline-offset: 2px;
+  border-radius: 6px;
+  transition: outline-offset 0.15s ease;
+}
+
+/* ── Heart pulse animation for likes ── */
+@keyframes heartPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.35);
+  }
 }
