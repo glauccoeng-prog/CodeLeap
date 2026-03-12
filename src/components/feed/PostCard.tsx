@@ -127,7 +127,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
         className="bg-white border border-[#999] rounded-2xl overflow-hidden"
       >
         {/* ── Card Header ── */}
-        <div className="bg-primary px-6 h-17.5 flex items-center justify-between gap-4">
+        <div className="bg-primary px-4 sm:px-6 h-17.5 flex items-center justify-between gap-4">
           <h3 className="text-heading font-bold text-white truncate flex-1 min-w-0">
             {post.title}
           </h3>
@@ -165,7 +165,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
         </div>
 
         {/* ── Card Body ── */}
-        <div className="px-6 py-6">
+        <div className="p-4 sm:p-6">
           {/* Meta row */}
           <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
             <span className="text-subheading font-bold text-[#777]">@{post.username}</span>
@@ -198,11 +198,11 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
           )}
 
           {/* ── Actions row ── */}
-          <div className="flex items-center gap-5 mt-5">
+          <div className="flex items-center flex-wrap gap-y-3 gap-x-4 sm:gap-5 mt-5">
             <button
               onClick={() => addLike()}
               className={[
-                'flex items-center gap-1.5 text-body transition-all duration-150',
+                'flex items-center gap-1.5 text-body whitespace-nowrap transition-all duration-150',
                 liked ? 'text-pink-500 cursor-default' : 'text-[#999] hover:text-pink-400',
               ].join(' ')}
               aria-label={liked ? 'Liked' : 'Like post'}
@@ -219,7 +219,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
 
             <button
               onClick={() => setShowComments(!showComments)}
-              className="flex items-center gap-1.5 text-body text-[#999] hover:text-primary transition-colors duration-150"
+              className="flex items-center gap-1.5 text-body whitespace-nowrap text-[#999] hover:text-primary transition-colors duration-150"
             >
               <MessageCircle size={18} aria-hidden="true" />
               <span>
@@ -232,7 +232,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
             <button
               onClick={() => toggleRepost()}
               className={[
-                'flex items-center gap-1.5 text-body transition-colors duration-150',
+                'flex items-center gap-1.5 text-body whitespace-nowrap transition-colors duration-150',
                 reposted ? 'text-success' : 'text-[#999] hover:text-success',
               ].join(' ')}
               aria-label={reposted ? 'Undo repost' : 'Repost'}
@@ -243,7 +243,7 @@ export function PostCard({ post, index = 0 }: PostCardProps) {
             </button>
 
             <div
-              className="flex items-center gap-1.5 text-body text-[#999]"
+              className="flex items-center gap-1.5 text-body whitespace-nowrap text-[#999]"
               aria-label="View count"
             >
               <Eye size={18} aria-hidden="true" />
